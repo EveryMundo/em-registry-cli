@@ -1,8 +1,10 @@
 {
   "name": "@everymundo/em-registry-cli",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "CLI for the EM Registry",
-  "bin": "bin/em-registry-cli.js",
+  "bin": {
+    "em-registry-cli": "bin/em-registry-cli.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
