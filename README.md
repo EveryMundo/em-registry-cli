@@ -10,6 +10,16 @@ npm i -g @everymundo/em-registry-cli
 
 Just like the awscli you can have different profiles/accounts in your `$HOME/.everymundo/registry.json` file
 
+### Configure the default account
+```sh
+em-registry-cli configure
+
+? What's the accountId [] ABCD
+? What's the userId  [] user1
+? What's the userApiKey [...] [hidden]
+```
+
+This will create a file like this
 *$HOME/.everymundo/registry.json*
 ```json
 {
@@ -21,15 +31,6 @@ Just like the awscli you can have different profiles/accounts in your `$HOME/.ev
         }
     }
 }
-```
-
-### Configure the default account
-```sh
-em-registry-cli configure
-
-? What's the accountId [] abc
-? What's the userId  [] u100
-? What's the userApiKey [...] [hidden]
 ```
 
 ### Configure another account
