@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const fs = require('fs').promises
-// const util = require('util')
+const { promises: fs } = require('fs')
+const { Command } = require('commander')
 const FormData = require('form-data')
 
 const { requestUploadUrl } = require('../lib/request-upload-url')
@@ -38,12 +38,14 @@ const uploadArtifact = async (uploadURL, compressedFileName, compressedFileBuffe
   console.log({ res: res.toString() })
 }
 
-async function main (compressedFileName, moduleId) {
+async function publish (compressedFileName, moduleId, account = 'default') {
   const data = await fs.readFile(compressedFileName)
 
   let urlResponse
   try {
-    urlResponse = await requestUploadUrl(identity, moduleId, data)
+    const id = identity.getAccount(account)
+    // console.log({ id })
+    urlResponse = await requestUploadUrl(id, moduleId, data)
   } catch (e) {
     if (e.stats == null) {
       throw e
@@ -58,21 +60,105 @@ async function main (compressedFileName, moduleId) {
   `)
 }
 
-function printUsage (exitCode = 1) {
-  console.log(`
-You must pass the zip file as the first argument
-e.g:
-  em-registry-cli my-package.zip
-  `)
-
-  if (exitCode != null) {
-    process.exit(exitCode)
+async function configure (account = 'default') {
+  // let urlResponse
+  let id
+  try {
+    id = identity.getAccount(account)
+  } catch (e) {
+    if (e.message === `Account [${account}] not found`) {
+      id = {
+        accountId: '',
+        userId: '',
+        userApiKey: ''
+      }
+    }
   }
+  const inquirer = require('inquirer')
+  // const chalkPipe = require('chalk-pipe')
+
+  const questions = [
+    {
+      type: 'input',
+      name: 'accountId',
+      message: `What's the accountId [${id.accountId}]`,
+      default () { return id.accountId },
+      validate (value) {
+        const pass = /^\w{3,12}$/.test(value)
+
+        return pass || 'Please enter a valid accountId with a valid string between 3 and 12 chars'
+      }
+    },
+    {
+      type: 'input',
+      name: 'userId',
+      message: `What's the userId  [${id.accountId}]`,
+      default () { return id.userId },
+      validate (value) {
+        const pass = /^\w{3,12}$/.test(value)
+
+        return pass || 'Please enter a valid userId with a valid string between 3 and 12 chars'
+      }
+    },
+    {
+      type: 'password',
+      name: 'userApiKey',
+      message: `What's the userApiKey [...${id.userApiKey.substr(-3)}]`,
+      default () { return id.userApiKey },
+      validate (value) {
+        const pass = /^\w{48,64}$/.test(value)
+
+        return pass || 'Please enter a valid userApiKey with a valid string between 48 and 64 chars'
+      }
+    }
+  ]
+
+  const answers = await inquirer.prompt(questions)
+  console.log(JSON.stringify(answers, null, '  '))
+  identity.saveAccount(account, answers)
+}
+
+function main () {
+  const program = new Command()
+
+  program.version(require('../package').version)
+  program.option('-a, --account <accountName>', 'The name of the configured account')
+
+  program
+    .command('init')
+    .description('Initilizes your current directory as an Everymundo Module')
+    .action(() => {
+      console.log('init command called')
+    })
+
+  program
+    .command('publish <zipfile>')
+    .description('Publishes your Everymundo Module')
+    .action((zipfile) => {
+      publish(zipfile, getModuleId(), program.opts().account)
+        .catch((e) => {
+          console.error(program.opts().debug ? e : e.message)
+
+          process.exit(1)
+        })
+    })
+
+  program
+    .command('configure')
+    .description('configures credentials')
+    .option('-a, --account <accountName>', 'The name of the configured account')
+    .action(() => {
+      configure(program.opts().account)
+        .catch((e) => {
+          console.error(program.opts().debug ? e : e.message)
+
+          process.exit(1)
+        })
+    })
+
+  program.parse(process.argv)
 }
 
 if (require.main === module) {
-  if (process.argv[2] == null) {
-    printUsage()
-  }
-  main(process.argv[2], getModuleId())
+  main()
 }
