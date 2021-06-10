@@ -4,7 +4,7 @@ const { Command } = require('commander')
 const FormData = require('form-data')
 
 const { requestUploadUrl } = require('../lib/request-upload-url')
-const { getModuleId } = require('../lib/get-module-id')
+const modLib = require('../lib/get-module-id')
 const identity = require('../lib/identity')
 
 const submit = (form, url) => new Promise((resolve, reject) => {
@@ -114,8 +114,35 @@ async function configure (account = 'default') {
   ]
 
   const answers = await inquirer.prompt(questions)
-  console.log(JSON.stringify(answers, null, '  '))
+
   identity.saveAccount(account, answers)
+}
+
+async function initialize (account = 'default') {
+  // let urlResponse
+  const mod = modLib.getModule()
+
+  const inquirer = require('inquirer')
+  // const chalkPipe = require('chalk-pipe')
+
+  const questions = [
+    {
+      type: 'input',
+      name: 'moduleId',
+      message: 'What\'s the moduleId',
+      default () { return mod.moduleId },
+      validate (value) {
+        const pass = /^\w{3,12}$/.test(value)
+
+        return pass || 'Please enter a valid moduleId with a valid string between 3 and 12 chars'
+      }
+    }
+  ]
+
+  const answers = await inquirer.prompt(questions)
+
+  mod.moduleId = answers.moduleId
+  modLib.saveModuleId(mod)
 }
 
 function main () {
@@ -125,17 +152,23 @@ function main () {
   program.option('-a, --account <accountName>', 'The name of the configured account')
 
   program
-    .command('init')
-    .description('Initilizes your current directory as an Everymundo Module')
-    .action(() => {
-      console.log('init command called')
-    })
-
-  program
     .command('publish <zipfile>')
     .description('Publishes your Everymundo Module')
     .action((zipfile) => {
-      publish(zipfile, getModuleId(), program.opts().account)
+      publish(zipfile, modLib.getModuleId(), program.opts().account)
+        .catch((e) => {
+          console.error(program.opts().debug ? e : e.message)
+
+          process.exit(1)
+        })
+    })
+
+  program
+    .command('init')
+    .description('initializes a module with its id')
+    // .option('-a, --account <accountName>', 'The name of the configured account')
+    .action(() => {
+      initialize(program.opts().account)
         .catch((e) => {
           console.error(program.opts().debug ? e : e.message)
 

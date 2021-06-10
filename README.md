@@ -6,7 +6,7 @@ CLI for the EM Registry
 npm i -g @everymundo/em-registry-cli
 ```
 
-## Configure your credentials
+## Credentials
 
 Just like the awscli you can have different profiles/accounts in your `$HOME/.everymundo/registry.json` file
 
@@ -42,8 +42,18 @@ em-registry-cli configure --account test
 ? What's the userId  [] u100
 ? What's the userApiKey [...] [hidden]
 ```
-## Create a module
+
+## Modules
+
+### Initialize an existing module
+In the case of having an existing project without an `em-module.json` file in the project your see the following message when running the *em-registry-cli*
 
 ```
-em-registry-cli create-module
+em-registry-cli init
+
+? What's the moduleId (m100)
+
+{
+  "moduleId": "m200"
+}
 ```
