@@ -81,7 +81,7 @@ async function configure (account = 'default') {
     {
       type: 'input',
       name: 'accountId',
-      message: `What's the accountId [${id.accountId}]`,
+      message: 'What\'s the accountId',
       default () { return id.accountId },
       validate (value) {
         const pass = /^\w{3,12}$/.test(value)
@@ -92,7 +92,7 @@ async function configure (account = 'default') {
     {
       type: 'input',
       name: 'userId',
-      message: `What's the userId  [${id.accountId}]`,
+      message: 'What\'s the userId',
       default () { return id.userId },
       validate (value) {
         const pass = /^\w{3,12}$/.test(value)
