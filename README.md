@@ -58,3 +58,25 @@ em-registry-cli init
   "moduleId": "m200"
 }
 ```
+
+### Publish a module
+At the moment we are only publishing a zipfile with the content of your transpile (preferred) module with the *em-registry-cli*
+
+An temporary requirement is an index.html file that loads your module. This requirement will be removed soon and we'll generate such file.
+
+The flow could be something like this:
+
+```sh
+npm run build
+
+cd dist # or cd build, or whatever is the output of your build
+
+zip -r ../build.zip *
+
+em-registry-cli publish ./build.zip
+```
+
+The output of the publish command, when successfull, should be a preview URL of the module. Something like this:
+```sh
+Preview URL: https://em-registry-uploads--849481900493--us-east-1.s3.amazonaws.com/prod/ANDREZ/m201/000000340618804092/index.html
+```
