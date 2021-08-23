@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+const FS = require('fs')
 const { promises: fs } = require('fs')
 const { Command } = require('commander')
 const FormData = require('form-data')
@@ -56,8 +57,7 @@ async function publish (compressedFileName, moduleId, account = 'default') {
 
   await uploadArtifact(urlResponse.uploadURL, compressedFileName, data)
 
-  console.log(`Preview URL: ${urlResponse.previewUrl}
-  `)
+  console.log(`Preview URL: ${urlResponse.previewUrl}`)
 }
 
 async function configure (account = 'default') {
@@ -118,6 +118,112 @@ async function configure (account = 'default') {
   identity.saveAccount(account, answers)
 }
 
+function getId (account = 'default') {
+  try {
+    return identity.getAccount(account)
+  } catch (e) {
+    if (e.message === `Account [${account}] not found`) {
+      return {
+        accountId: '',
+        userId: '',
+        userApiKey: ''
+      }
+    }
+  }
+}
+
+async function createModule (debug = false, account = 'default') {
+  // let urlResponse
+  // const id = getId(account)
+
+  const inquirer = require('inquirer')
+  // const chalkPipe = require('chalk-pipe')
+
+  const questions = [
+    {
+      type: 'input',
+      name: 'name',
+      message: 'Module\'s the name',
+      validate (value) {
+        const pass = /^\w[\w\s]{2,48}$/.test(value)
+
+        return pass || 'Please enter a valid Module Name with a valid string between 3 and 12 chars'
+      }
+    },
+    {
+      type: 'input',
+      name: 'tenants',
+      message: 'What companies are you building this module for?',
+      default () { return '*' },
+      validate (value) {
+        const pass = value === '*' || /^(?:(:?\w{2,4})\s)*(:?\w{2,4})$/.test(value)
+
+        return pass || 'Please enter *, one code or a list of codes separated by spaces. e.g.: AA BB C8 D2'
+      }
+    },
+    {
+      type: 'input',
+      name: 'buildDirectory',
+      message: 'What\'s the build directory?',
+      default () { return 'build' },
+      validate (value) {
+        const pass = /^\w{3,12}$/.test(value)
+
+        return pass || 'Please enter a valid build directory name with a valid string between 3 and 12 chars'
+      }
+    },
+    {
+      type: 'input',
+      name: 'mainFile',
+      message: 'What\'s the main javascript file?',
+      default () { return 'index.js' },
+      validate (value) {
+        const pass = /^\w{3,18}\.js$/.test(value)
+
+        return pass || 'Please enter a main javascript file with a valid string between 48 and 64 chars'
+      }
+    },
+    {
+      type: 'input',
+      name: 'prePackCommand',
+      message: 'What\'s the pre package command?',
+      default () { return 'npm run build' },
+      validate (value) {
+        const regexp = /^\w([\w\s]{1,64})*?$/
+        const pass = regexp.test(value)
+
+        if (debug) {
+          console.log({ debug, value, regexp })
+        }
+
+        return pass || 'Please enter a valid pre package command'
+      }
+    }
+  ]
+
+  const answers = await inquirer.prompt(questions)
+
+  console.log({ answers })
+
+  const finalAnswer = await inquirer.prompt([{
+    type: 'input',
+    name: 'correct',
+    message: 'Do you confirm all your answers are correct? (yes|no)',
+    default () { return 'no' },
+    validate (value) {
+      const regexp = /^(?:yes|no)$/
+      const pass = regexp.test(value.toL)
+
+      return pass || 'Please answer yes or no'
+    }
+  }])
+
+  console.log({ finalAnswer })
+  if (finalAnswer.correct.toLowerCase() === 'yes') {
+
+  }
+}
+
 async function initialize (account = 'default') {
   // let urlResponse
   const mod = modLib.getModule()
@@ -145,48 +251,98 @@ async function initialize (account = 'default') {
   modLib.saveModuleId(mod)
 }
 
+async function createPackage (account = 'default') {
+  const mod = modLib.getModule()
+
+  try {
+    if (mod.prePackageCmd != null) {
+      console.log(`Running ${mod.prePackageCmd} ...`)
+      require('child_process').execSync(mod.prePackageCmd)
+    }
+  } catch (err) {
+    console.error(err.stderr.toString())
+
+    process.exit(1)
+  }
+
+  const yazl = require('yazl')
+  const zipfile = new yazl.ZipFile()
+
+  const dir = await fs.opendir(mod.buildDirectory)
+  const entries = dir.entries()
+
+  const zipFileName = 'em-module.zip'
+  console.log(`creating file ${zipFileName}...`)
+  for await (const entry of entries) {
+    console.log(`adding ${entry.name}`)
+    zipfile.addFile(`${mod.buildDirectory}/${entry.name}`, entry.name)
+  }
+
+  return saveZipFile(zipFileName, zipfile)
+}
+
+const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
+  zipfile.end(() => zipfile.outputStream.pipe(FS.createWriteStream(zipFileName))
+    .once('close', () => {
+      console.log(`file ${zipFileName} has been created`)
+
+      resolve(zipFileName)
+    }))
+})
+
 function main () {
   const program = new Command()
 
+  function exitOnError (e) {
+    console.error(program.opts().debug ? e : e.message)
+
+    process.exit(1)
+  }
+
   program.version(require('../package').version)
   program.option('-a, --account <accountName>', 'The name of the configured account')
+  program.option('-d, --debug', 'Prints more information about the current process')
+  program.option('-p, --publish', 'publishes the module right after packaging it')
+
+  function publishAction (zipfile) {
+    return publish(zipfile, modLib.getModuleId(), program.opts().account).catch(exitOnError)
+  }
 
   program
     .command('publish <zipfile>')
     .description('Publishes your Everymundo Module')
-    .action((zipfile) => {
-      publish(zipfile, modLib.getModuleId(), program.opts().account)
-        .catch((e) => {
-          console.error(program.opts().debug ? e : e.message)
-
-          process.exit(1)
-        })
-    })
+    .action(publishAction)
 
   program
     .command('init')
     .description('initializes a module with its id')
     // .option('-a, --account <accountName>', 'The name of the configured account')
-    .action(() => {
-      initialize(program.opts().account)
-        .catch((e) => {
-          console.error(program.opts().debug ? e : e.message)
-
-          process.exit(1)
-        })
-    })
+    .action(() => initialize(program.opts().account).catch(exitOnError))
 
   program
     .command('configure')
     .description('configures credentials')
     .option('-a, --account <accountName>', 'The name of the configured account')
-    .action(() => {
-      configure(program.opts().account)
-        .catch((e) => {
-          console.error(program.opts().debug ? e : e.message)
+    .action(() => configure(program.opts().account).catch(exitOnError))
 
-          process.exit(1)
-        })
+  program
+    .command('create')
+    .description('creates a module on our servers')
+    .option('-a, --account <accountName>', 'The name of the configured account')
+    .action(() => createModule(program.opts().debug, program.opts().account).catch(exitOnError))
+
+  program
+    .command('package')
+    .description('creates a package file using the pre-defined command')
+    .option('-a, --account <accountName>', 'The name of the configured account')
+    .option('-p, --publish', 'Publishes the generaged package')
+    .action(async () => {
+      const zipFileName = await createPackage(program.opts().account).catch(exitOnError)
+
+      console.log({ opts: program.opts() })
+      if (program.opts().publish) {
+        await publishAction(zipFileName)
+      }
     })
 
   program.parse(process.argv)
