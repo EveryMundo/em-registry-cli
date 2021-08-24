@@ -7,6 +7,7 @@ const FormData = require('form-data')
 const { requestUploadUrl } = require('../lib/request-upload-url')
 const modLib = require('../lib/get-module-id')
 const identity = require('../lib/identity')
+const registryApis = require('../lib/registry-webapis')
 
 const submit = (form, url) => new Promise((resolve, reject) => {
   form.submit(url, (err, res) => {
@@ -133,11 +134,7 @@ function getId (account = 'default') {
 }
 
 async function createModule (debug = false, account = 'default') {
-  // let urlResponse
-  // const id = getId(account)
-
   const inquirer = require('inquirer')
-  // const chalkPipe = require('chalk-pipe')
 
   const questions = [
     {
@@ -152,7 +149,7 @@ async function createModule (debug = false, account = 'default') {
     },
     {
       type: 'input',
-      name: 'tenants',
+      name: 'tenantIds',
       message: 'What companies are you building this module for?',
       default () { return '*' },
       validate (value) {
@@ -203,6 +200,10 @@ async function createModule (debug = false, account = 'default') {
 
   const answers = await inquirer.prompt(questions)
 
+  if (answers.tenantIds.match(/^(?:[A-Za-z0-9]{2,4}\s*?)+$/)) {
+    answers.tenantIds = answers.tenantIds.trim().split(/\s+/).map(_ => _.toUpperCase()).sort()
+  }
+
   console.log({ answers })
 
   const finalAnswer = await inquirer.prompt([{
@@ -212,16 +213,27 @@ async function createModule (debug = false, account = 'default') {
     default () { return 'no' },
     validate (value) {
       const regexp = /^(?:yes|no)$/
-      const pass = regexp.test(value.toL)
+      const pass = regexp.test(value.toLowerCase())
 
       return pass || 'Please answer yes or no'
     }
   }])
 
   console.log({ finalAnswer })
-  if (finalAnswer.correct.toLowerCase() === 'yes') {
-
+  if (finalAnswer.correct.toLowerCase() === 'no') {
+    return console.log('Ok! Try again later')
   }
+
+  const response = await registryApis.post(identity.getAccount(account), 'create-module', answers)
+
+  const modObject = {
+    moduleId: response.module._id,
+    ...answers
+  }
+
+  modLib.saveModuleId(modObject)
+
+  console.log({ response })
 }
 
 async function initialize (account = 'default') {
