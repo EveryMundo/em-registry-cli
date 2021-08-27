@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 const FS = require('fs')
+const path = require('path')
 const { promises: fs } = require('fs')
 const { Command } = require('commander')
 const FormData = require('form-data')
@@ -59,6 +60,7 @@ async function publish (compressedFileName, moduleId, account = 'default') {
   await uploadArtifact(urlResponse.uploadURL, compressedFileName, data)
 
   console.log(`Preview URL: ${urlResponse.previewUrl}`)
+  console.log(`Laboratorium: https://everymundo.github.io/ui-laboratorium?url=${(urlResponse.previewUrl)}`)
 }
 
 async function configure (account = 'default') {
@@ -135,6 +137,14 @@ function getId (account = 'default') {
 
 async function createModule (debug = false, account = 'default') {
   const inquirer = require('inquirer')
+  const mod = modLib.getModule()
+
+  if (mod.moduleId != null) {
+    console.error('It seems you already have a project in this directory. Create command aborted!')
+    console.error(mod)
+
+    process.exit(1)
+  }
 
   const questions = [
     {
@@ -250,7 +260,7 @@ async function initialize (account = 'default') {
       message: 'What\'s the moduleId',
       default () { return mod.moduleId },
       validate (value) {
-        const pass = /^\w{3,12}$/.test(value)
+        const pass = /^\w[-\w]{2,11}\w$/.test(value)
 
         return pass || 'Please enter a valid moduleId with a valid string between 3 and 12 chars'
       }
@@ -266,6 +276,12 @@ async function initialize (account = 'default') {
 async function createPackage (account = 'default') {
   const mod = modLib.getModule()
 
+  if (mod.err != null) {
+    if (mod.err.code === 'MODULE_NOT_FOUND') {
+      console.error('Make sure to run the init command for an existing project or the create command to create a new module')
+      throw new Error(`Working directory ${path.dirname(mod.moduleJsonFile)} does not contain ${path.basename(mod.moduleJsonFile)}`)
+    }
+  }
   try {
     if (mod.prePackageCmd != null) {
       console.log(`Running ${mod.prePackageCmd} ...`)
@@ -280,17 +296,29 @@ async function createPackage (account = 'default') {
   const yazl = require('yazl')
   const zipfile = new yazl.ZipFile()
 
-  const dir = await fs.opendir(mod.buildDirectory)
-  const entries = dir.entries()
-
   const zipFileName = 'em-module.zip'
   console.log(`creating file ${zipFileName}...`)
-  for await (const entry of entries) {
-    console.log(`adding ${entry.name}`)
-    zipfile.addFile(`${mod.buildDirectory}/${entry.name}`, entry.name)
-  }
+  await addDirectory(mod.buildDirectory, zipfile)
 
   return saveZipFile(zipFileName, zipfile)
+}
+
+async function addDirectory (dirpath, zipfile) {
+  const dir = await fs.opendir(dirpath)
+  const entries = dir.entries()
+
+  for await (const entry of entries) {
+    const filePath = `${dirpath}/${entry.name}`
+    const stats = await fs.lstat(filePath)
+
+    if (stats.isFile()) {
+      const entryName = filePath.substr(filePath.indexOf('/') + 1)
+      console.log(`adding ${filePath} as ${entryName}`)
+      zipfile.addFile(`${filePath}`, entryName)
+    } else if (stats.isDirectory()) {
+      await addDirectory(filePath, zipfile)
+    }
+  }
 }
 
 const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
@@ -351,7 +379,6 @@ function main () {
     .action(async () => {
       const zipFileName = await createPackage(program.opts().account).catch(exitOnError)
 
-      console.log({ opts: program.opts() })
       if (program.opts().publish) {
         await publishAction(zipFileName)
       }

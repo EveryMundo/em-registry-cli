@@ -24,7 +24,6 @@
     "commander": "^8.1.0",
     "form-data": "^4.0.0",
     "inquirer": "^8.1.2",
-    "requireg": "^0.2.2",
     "yazl": "^2.5.1"
   }
 }
