@@ -49,6 +49,7 @@ async function publish (compressedFileName, moduleId, account = 'default') {
     const id = identity.getAccount(account)
     // console.log({ id })
     urlResponse = await requestUploadUrl(id, moduleId, data)
+    console.log({ urlResponse })
   } catch (e) {
     if (e.stats == null) {
       throw e
@@ -60,23 +61,18 @@ async function publish (compressedFileName, moduleId, account = 'default') {
   await uploadArtifact(urlResponse.uploadURL, compressedFileName, data)
 
   console.log(`Preview URL: ${urlResponse.previewUrl}`)
-  console.log(`Laboratorium: https://everymundo.github.io/ui-laboratorium?url=${(urlResponse.previewUrl)}`)
+  console.log(`Laboratorium: https://everymundo.github.io/ui-laboratorium/sandbox?url=${(urlResponse.previewUrl)}`)
+
+  if (Array.isArray(urlResponse.tenantsPreviewUrls)) {
+    for (const { tenantId, url } of urlResponse.tenantsPreviewUrls) {
+      console.log(`\nPreview URL [${tenantId}]: ${url}`)
+      console.log(`Laboratorium [${tenantId}]: https://everymundo.github.io/ui-laboratorium/sandbox?url=${(urlResponse.previewUrl)}`)
+    }
+  }
 }
 
 async function configure (account = 'default') {
-  // let urlResponse
-  let id
-  try {
-    id = identity.getAccount(account)
-  } catch (e) {
-    if (e.message === `Account [${account}] not found`) {
-      id = {
-        accountId: '',
-        userId: '',
-        userApiKey: ''
-      }
-    }
-  }
+  const id = getId(account)
   const inquirer = require('inquirer')
   // const chalkPipe = require('chalk-pipe')
 
@@ -246,6 +242,12 @@ async function createModule (debug = false, account = 'default') {
   console.log({ response })
 }
 
+async function listModules (debug = false, account = 'default') {
+  const response = await registryApis.get(identity.getAccount(account), 'list-modules')
+
+  console.table(response.map(({ _id, name, forTenants, createdBy }) => ({ _id, name, forTenants, createdBy })))
+}
+
 async function initialize (account = 'default') {
   // let urlResponse
   const mod = modLib.getModule()
@@ -370,6 +372,13 @@ function main () {
     .description('creates a module on our servers')
     .option('-a, --account <accountName>', 'The name of the configured account')
     .action(() => createModule(program.opts().debug, program.opts().account).catch(exitOnError))
+
+  program
+    .command('list-modules')
+    .description('List available modules for you')
+    .option('-a, --account <accountName>', 'The name of the configured account')
+    .option('--mine', 'By default all modules are listed, this limits the list do the ones created by yourself')
+    .action(() => listModules(program.opts().debug, program.opts().account).catch(exitOnError))
 
   program
     .command('package')
