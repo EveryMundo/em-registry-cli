@@ -60,13 +60,14 @@ async function publish (compressedFileName, moduleId, account = 'default') {
 
   await uploadArtifact(urlResponse.uploadURL, compressedFileName, data)
 
+  const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
   console.log(`Preview URL: ${urlResponse.previewUrl}`)
-  console.log(`Laboratorium: https://everymundo.github.io/ui-laboratorium/sandbox?url=${(urlResponse.previewUrl)}`)
+  console.log(`Playground: ${playgroundUrl}`)
 
   if (Array.isArray(urlResponse.tenantsPreviewUrls)) {
     for (const { tenantId, url } of urlResponse.tenantsPreviewUrls) {
       console.log(`\nPreview URL [${tenantId}]: ${url}`)
-      console.log(`Laboratorium [${tenantId}]: https://everymundo.github.io/ui-laboratorium/sandbox?url=${(urlResponse.previewUrl)}`)
+      console.log(`Playground [${tenantId}]: ${playgroundUrl}`)
     }
   }
 }
