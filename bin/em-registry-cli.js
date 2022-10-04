@@ -5,7 +5,7 @@ const { promises: fs } = require('fs')
 const { Command } = require('commander')
 const FormData = require('form-data')
 
-const { requestUploadUrl } = require('../lib/request-upload-url')
+// const { requestUploadUrl } = require('../lib/request-upload-url')
 const modLib = require('../lib/get-module-id')
 const identity = require('../lib/identity')
 const registryApis = require('../lib/registry-webapis')
@@ -41,14 +41,14 @@ const uploadArtifact = async (uploadURL, compressedFileName, compressedFileBuffe
   console.log({ res: res.toString() })
 }
 
-async function publish (compressedFileName, moduleId, account = 'default') {
+async function push (compressedFileName, moduleId, account = 'default') {
   const data = await fs.readFile(compressedFileName)
 
   let urlResponse
   try {
     const id = identity.getAccount(account)
     // console.log({ id })
-    urlResponse = await requestUploadUrl(id, moduleId, data)
+    urlResponse = await registryApis.requestUploadUrl(id, moduleId, data)
     console.log({ urlResponse })
   } catch (e) {
     if (e.stats == null) {
@@ -149,9 +149,9 @@ async function createModule (debug = false, account = 'default') {
       name: 'name',
       message: 'Module\'s the name',
       validate (value) {
-        const pass = /^\w[\w\s]{2,48}$/.test(value)
+        const pass = /^\w[-\w\s]{2,48}$/.test(value)
 
-        return pass || 'Please enter a valid Module Name with a valid string between 3 and 12 chars'
+        return pass || 'Please enter a valid Module Name with a valid string between 2 and 48 chars'
       }
     },
     {
@@ -239,6 +239,62 @@ async function createModule (debug = false, account = 'default') {
   }
 
   modLib.saveModuleId(modObject)
+
+  console.log({ response })
+}
+
+async function requestQa (debug = false, account = 'default') {
+  const inquirer = require('inquirer')
+  const mod = modLib.getModule()
+
+  if (mod.moduleId == null) {
+    console.error('Missing Module!')
+    if (debug) console.error(mod)
+
+    process.exit(1)
+  }
+
+  const questions = [
+    {
+      type: 'input',
+      name: 'deploymentId',
+      message: 'Deployment ID',
+      validate (value) {
+        const pass = /^\d+$/.test(value)
+
+        return pass || 'Please enter a valid deployment id'
+      }
+    }
+  ]
+
+  const answers = await inquirer.prompt(questions)
+
+  console.log({ answers })
+
+  const finalAnswer = await inquirer.prompt([{
+    type: 'input',
+    name: 'correct',
+    message: 'Are you sure you want to promote this deployment id? (yes|no)',
+    default () { return 'no' },
+    validate (value) {
+      const regexp = /^(?:yes|no)$/
+      const pass = regexp.test(value.toLowerCase())
+
+      return pass || 'Please answer yes or no'
+    }
+  }])
+
+  console.log({ finalAnswer })
+  if (finalAnswer.correct.toLowerCase() === 'no') {
+    return console.log('Ok! Try again later')
+  }
+
+  const postData = {
+    moduleId: mod.moduleId,
+    deploymentId: answers.deploymentId
+  }
+
+  const response = await registryApis.post(identity.getAccount(account), 'qa-request', postData)
 
   console.log({ response })
 }
@@ -345,16 +401,16 @@ function main () {
   program.version(require('../package').version)
   program.option('-a, --account <accountName>', 'The name of the configured account')
   program.option('-d, --debug', 'Prints more information about the current process')
-  program.option('-p, --publish', 'publishes the module right after packaging it')
+  program.option('-p, --push', 'pushes the module right after packaging it')
 
-  function publishAction (zipfile) {
-    return publish(zipfile, modLib.getModuleId(), program.opts().account).catch(exitOnError)
+  function pushAction (zipfile) {
+    return push(zipfile, modLib.getModuleId(), program.opts().account).catch(exitOnError)
   }
 
   program
-    .command('publish <zipfile>')
-    .description('Publishes your Everymundo Module')
-    .action(publishAction)
+    .command('push <zipfile>')
+    .description('Pushes your Everymundo Module')
+    .action(pushAction)
 
   program
     .command('init')
@@ -385,14 +441,20 @@ function main () {
     .command('package')
     .description('creates a package file using the pre-defined command')
     .option('-a, --account <accountName>', 'The name of the configured account')
-    .option('-p, --publish', 'Publishes the generaged package')
+    .option('-p, --push', 'Pushes the generaged package')
     .action(async () => {
       const zipFileName = await createPackage(program.opts().account).catch(exitOnError)
 
-      if (program.opts().publish) {
-        await publishAction(zipFileName)
+      if (program.opts().push) {
+        await pushAction(zipFileName)
       }
     })
+
+  program
+    .command('request-qa')
+    .description('puts a specific deployment in a queue for QA to promote it to a prod version')
+    .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
+    .action(() => requestQa(program.opts().debug, program.opts().account).catch(exitOnError))
 
   program.parse(process.argv)
 }
