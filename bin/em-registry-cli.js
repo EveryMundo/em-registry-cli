@@ -41,7 +41,9 @@ const uploadArtifact = async (uploadURL, compressedFileName, compressedFileBuffe
   console.log({ res: res.toString() })
 }
 
-async function push (compressedFileName, moduleId, account = 'default') {
+async function push (compressedFileName, command) {
+  const { account = 'default' } = command.parent.opts()
+  const moduleId = modLib.getModuleId()
   const data = await fs.readFile(compressedFileName)
 
   let urlResponse
@@ -72,7 +74,8 @@ async function push (compressedFileName, moduleId, account = 'default') {
   }
 }
 
-async function configure (account = 'default') {
+async function configure (options, command) {
+  const { account = 'default' } = command.parent.opts()
   const id = getId(account)
   const inquirer = require('inquirer')
   // const chalkPipe = require('chalk-pipe')
@@ -132,7 +135,8 @@ function getId (account = 'default') {
   }
 }
 
-async function createModule (debug = false, account = 'default') {
+async function createModule (options, command) {
+  const { debug = false, account = 'default' } = command.parent.opts()
   const inquirer = require('inquirer')
   const mod = modLib.getModule()
 
@@ -243,7 +247,9 @@ async function createModule (debug = false, account = 'default') {
   console.log({ response })
 }
 
-async function requestQa (debug = false, account = 'default') {
+// async function requestQa (opts, debug = false, account = 'default') {
+async function requestQa (options, command) {
+  const { debug = false, account = 'default' } = command.parent.opts()
   const inquirer = require('inquirer')
   const mod = modLib.getModule()
 
@@ -254,22 +260,27 @@ async function requestQa (debug = false, account = 'default') {
     process.exit(1)
   }
 
-  const questions = [
-    {
-      type: 'input',
-      name: 'deploymentId',
-      message: 'Deployment ID',
-      validate (value) {
-        const pass = /^\d+$/.test(value)
+  const deploymentIdRegExp = /^\d+$/
+  const optidTestPassed = deploymentIdRegExp.test(options.id)
+  if (options.id == null || !optidTestPassed) {
+    console.log(`Invalid deployment id [ ${options.id} ]`)
+  }
 
-        return pass || 'Please enter a valid deployment id'
-      }
-    }
-  ]
+  const questions = (options.id !== null && optidTestPassed)
+    ? []
+    : [{
+        type: 'input',
+        name: 'deploymentId',
+        message: 'Deployment ID',
+        validate (value) {
+          const pass = deploymentIdRegExp.test(value)
+
+          return pass || 'Please enter a valid deployment id'
+        }
+      }]
 
   const answers = await inquirer.prompt(questions)
-
-  console.log({ answers })
+  console.log('Deployment ID: ', answers.deploymentId || options.id)
 
   const finalAnswer = await inquirer.prompt([{
     type: 'input',
@@ -299,14 +310,17 @@ async function requestQa (debug = false, account = 'default') {
   console.log({ response })
 }
 
-async function listModules (debug = false, account = 'default') {
-  const response = await registryApis.get(identity.getAccount(account), 'list-modules')
+async function listModules (opts, command) {
+  const { debug = false, account = 'default' } = command.parent.opts()
+  console.log({ opts })
+  const response = await registryApis.get(identity.getAccount(account), 'list-modules', debug)
 
   console.table(response.map(({ _id, name, forTenants, createdBy }) => ({ _id, name, forTenants, createdBy })))
 }
 
-async function initialize (account = 'default') {
+async function initialize (options, command) {
   // let urlResponse
+  // const { account = 'default' } = command.parent.opts()
   const mod = modLib.getModule()
 
   const inquirer = require('inquirer')
@@ -332,7 +346,8 @@ async function initialize (account = 'default') {
   modLib.saveModuleId(mod)
 }
 
-async function createPackage (account = 'default') {
+async function createPackage (options, command) {
+  // const { debug = false, account = 'default' } = command.parent.opts()
   const mod = modLib.getModule()
 
   if (mod.err != null) {
@@ -341,6 +356,7 @@ async function createPackage (account = 'default') {
       throw new Error(`Working directory ${path.dirname(mod.moduleJsonFile)} does not contain ${path.basename(mod.moduleJsonFile)}`)
     }
   }
+
   try {
     if (mod.prePackageCmd != null) {
       console.log(`Running ${mod.prePackageCmd} ...`)
@@ -359,7 +375,11 @@ async function createPackage (account = 'default') {
   console.log(`creating file ${zipFileName}...`)
   await addDirectory(mod.buildDirectory, zipfile)
 
-  return saveZipFile(zipFileName, zipfile)
+  await saveZipFile(zipFileName, zipfile)
+
+  if (options.push) {
+    await push(zipFileName, command)
+  }
 }
 
 async function addDirectory (dirpath, zipfile) {
@@ -391,70 +411,65 @@ const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
 
 function main () {
   const program = new Command()
+  // const process = require('node:process')
 
-  function exitOnError (e) {
+  process.on('uncaughtException', (e, origin) => {
     console.error(program.opts().debug ? e : e.message)
 
     process.exit(1)
-  }
+  })
+
+  process.on('unhandledRejection', (reason, promise) => {
+    console.log('Unhandled Rejection at:', promise, 'reason:', reason)
+
+    process.exit(1)
+  })
 
   program.version(require('../package').version)
   program.option('-a, --account <accountName>', 'The name of the configured account')
   program.option('-d, --debug', 'Prints more information about the current process')
-  program.option('-p, --push', 'pushes the module right after packaging it')
-
-  function pushAction (zipfile) {
-    return push(zipfile, modLib.getModuleId(), program.opts().account).catch(exitOnError)
-  }
 
   program
     .command('push <zipfile>')
     .description('Pushes your Everymundo Module')
-    .action(pushAction)
+    // .action((zipfile, options, command) => push(zipfile, command, modLib.getModuleId()))
+    .action(push)
 
   program
     .command('init')
     .description('initializes a module with its id')
-    // .option('-a, --account <accountName>', 'The name of the configured account')
-    .action(() => initialize(program.opts().account).catch(exitOnError))
+    .action(initialize)
 
   program
     .command('configure')
     .description('configures credentials')
-    .option('-a, --account <accountName>', 'The name of the configured account')
-    .action(() => configure(program.opts().account).catch(exitOnError))
+    .action(configure)
 
   program
     .command('create')
     .description('creates a module on our servers')
-    .option('-a, --account <accountName>', 'The name of the configured account')
-    .action(() => createModule(program.opts().debug, program.opts().account).catch(exitOnError))
+    // .option('-a, --account <accountName>', 'The name of the configured account')
+    .action(createModule)
 
   program
     .command('list-modules')
     .description('List available modules for you')
-    .option('-a, --account <accountName>', 'The name of the configured account')
+    // .option('-a, --account <accountName>', 'The name of the configured account')
     .option('--mine', 'By default all modules are listed, this limits the list do the ones created by yourself')
-    .action(() => listModules(program.opts().debug, program.opts().account).catch(exitOnError))
+    .action(listModules)
 
   program
     .command('package')
     .description('creates a package file using the pre-defined command')
-    .option('-a, --account <accountName>', 'The name of the configured account')
+    // .option('-a, --account <accountName>', 'The name of the configured account')
     .option('-p, --push', 'Pushes the generaged package')
-    .action(async () => {
-      const zipFileName = await createPackage(program.opts().account).catch(exitOnError)
-
-      if (program.opts().push) {
-        await pushAction(zipFileName)
-      }
-    })
+    .action(createPackage)
 
   program
     .command('request-qa')
     .description('puts a specific deployment in a queue for QA to promote it to a prod version')
     .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
-    .action(() => requestQa(program.opts().debug, program.opts().account).catch(exitOnError))
+    .action(requestQa)
 
   program.parse(process.argv)
 }
