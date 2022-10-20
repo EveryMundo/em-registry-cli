@@ -21,7 +21,7 @@
   "homepage": "https://github.com/EveryMundo/em-registry-cli#readme",
   "dependencies": {
     "@everymundo/http-client": "^4.2.3",
-    "commander": "^8.1.0",
+    "commander": "^9.4.1",
     "form-data": "^4.0.0",
     "inquirer": "^8.1.2",
     "yazl": "^2.5.1"
