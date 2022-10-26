@@ -1,4 +1,4 @@
-# em-registry-cli
+# registry
 CLI for the EM Registry
 
 ## Instalation
@@ -12,7 +12,7 @@ Just like the awscli you can have different profiles/accounts in your `$HOME/.ev
 
 ### Configure the default account
 ```sh
-em-registry-cli configure
+registry configure
 
 ? What's the accountId [] ABCD
 ? What's the userId  [] user1
@@ -35,9 +35,9 @@ This will create a file like this
 
 ### Configure another account
 ```sh
-em-registry-cli configure -a test
+registry configure -a test
 # or
-em-registry-cli configure --account test
+registry configure --account test
 
 ? What's the accountId [] abc
 ? What's the userId  [] u100
@@ -47,10 +47,10 @@ em-registry-cli configure --account test
 ## Modules
 
 ### Initialize an existing module
-In the case of having an existing project without an `em-module.json` file in the project your see the following message when running the *em-registry-cli*
+In the case of having an existing project without an `em-module.json` file in the project your see the following message when running the *registry*
 
 ```
-em-registry-cli init
+registry init
 
 ? What's the moduleId (m100)
 
@@ -60,7 +60,7 @@ em-registry-cli init
 ```
 
 ### Publish a module
-At the moment we are only publishing a zipfile with the content of your transpile (preferred) module with the *em-registry-cli*
+At the moment we are only publishing a zipfile with the content of your transpile (preferred) module with the *registry*
 
 An temporary requirement is an index.html file that loads your module. This requirement will be removed soon and we'll generate such file.
 
@@ -73,7 +73,7 @@ cd dist # or cd build, or whatever is the output of your build
 
 zip -r ../build.zip *
 
-em-registry-cli publish ./build.zip
+registry publish ./build.zip
 ```
 
 The output of the publish command, when successfull, should be a preview URL of the module. Something like this:
