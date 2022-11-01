@@ -28,7 +28,7 @@ const submit = (form, url) => new Promise((resolve, reject) => {
 })
 
 const uploadArtifact = async (os, form, uploadURL, compressedFileName, compressedFileBuffer) => {
-  if (os.platform() === 'mac') {
+  if (os.platform() === 'darwin') {
     process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
   }
 

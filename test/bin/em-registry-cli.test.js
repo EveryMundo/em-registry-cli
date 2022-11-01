@@ -25,7 +25,7 @@ describe('bin/em-registry-cli', () => {
       const os = require('os')
 
       beforeEach(() => {
-        box.stub(os, 'platform').callsFake(() => 'mac')
+        box.stub(os, 'platform').callsFake(() => 'darwin')
       })
 
       it('should set env.NODE_TLS_REJECT_UNAUTHORIZED to "0"', async () => {
