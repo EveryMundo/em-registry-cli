@@ -287,6 +287,8 @@ async function requestQa (options, command) {
       }]
 
   const answers = await inquirer.prompt(questions)
+  if (answers.deploymentId == null) answers.deploymentId = options.id
+
   console.log('Deployment ID: ', answers.deploymentId || options.id)
 
   const finalAnswer = await inquirer.prompt([{
