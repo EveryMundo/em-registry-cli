@@ -475,7 +475,7 @@ function main (process, os) {
     .action(createPackage)
 
   program
-    .command('request-qa')
+    .command('promote')
     .description('puts a specific deployment in a queue for QA to promote it to a prod version')
     .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
     .action(requestQa)
