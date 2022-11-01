@@ -46,7 +46,7 @@ const uploadArtifact = async (os, form, uploadURL, compressedFileName, compresse
   return res
 }
 
-async function push (compressedFileName, command) {
+async function push (compressedFileName, options, command) {
   const { account = 'default' } = command.parent.opts()
   const moduleId = modLib.getModuleId()
   const data = await fs.readFile(compressedFileName)
@@ -385,7 +385,7 @@ async function createPackage (options, command) {
   await saveZipFile(zipFileName, zipfile)
 
   if (options.push) {
-    await push(zipFileName, command)
+    await push(zipFileName, {}, command)
   }
 }
 
