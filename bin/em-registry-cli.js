@@ -151,7 +151,7 @@ async function createModule (options, command) {
     {
       type: 'input',
       name: 'name',
-      message: 'Module\'s the name',
+      message: 'Module name',
       validate (value) {
         const pass = /^\w[-\w\s]{2,48}$/.test(value)
 
