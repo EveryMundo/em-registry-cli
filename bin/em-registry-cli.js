@@ -27,9 +27,12 @@ const submit = (form, url) => new Promise((resolve, reject) => {
   })
 })
 
-const uploadArtifact = async (uploadURL, compressedFileName, compressedFileBuffer) => {
+const uploadArtifact = async (os, form, uploadURL, compressedFileName, compressedFileBuffer) => {
+  if (os.platform() === 'mac') {
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
+  }
+
   const { url, fields } = uploadURL
-  const form = new FormData()
   Object.entries(fields).forEach(([field, value]) => {
     form.append(field, value)
   })
@@ -39,6 +42,8 @@ const uploadArtifact = async (uploadURL, compressedFileName, compressedFileBuffe
   const res = await submit(form, url)
 
   console.log({ res: res.toString() })
+
+  return res
 }
 
 async function push (compressedFileName, command) {
@@ -60,7 +65,9 @@ async function push (compressedFileName, command) {
     return console.error(e.stats.responseText)
   }
 
-  await uploadArtifact(urlResponse.uploadURL, compressedFileName, data)
+  const os = require('os')
+  const form = new FormData()
+  await uploadArtifact(os, form, urlResponse.uploadURL, compressedFileName, data)
 
   const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
   console.log(`Preview URL: ${urlResponse.previewUrl}`)
@@ -409,7 +416,7 @@ const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
     }))
 })
 
-function main () {
+function main (process, os) {
   const program = new Command()
   // const process = require('node:process')
 
@@ -475,5 +482,10 @@ function main () {
 }
 
 if (require.main === module) {
-  main()
+  main(process, require('os'))
+}
+
+module.exports = {
+  uploadArtifact,
+  main
 }
