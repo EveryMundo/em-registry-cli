@@ -367,9 +367,12 @@ async function createPackage (options, command) {
   }
 
   try {
-    if (mod.prePackageCmd != null) {
-      console.log(`Running ${mod.prePackageCmd} ...`)
-      require('child_process').execSync(mod.prePackageCmd)
+    if (mod.prePackCommand != null) {
+      console.log(`Running "${mod.prePackCommand}" ...`)
+      const startTime = Date.now()
+      const packResult = require('child_process').execSync(mod.prePackCommand)
+      const timeTaken = Date.now() - startTime
+      console.log(`====\n${packResult.toString()}====\n${timeTaken / 1000} seconds\n====`)
     }
   } catch (err) {
     console.error(err.stderr.toString())
