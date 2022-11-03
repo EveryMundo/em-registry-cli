@@ -367,7 +367,11 @@ async function createPackage (options, command) {
   }
 
   try {
-    if (mod.prePackCommand != null) {
+    if (options.build) {
+      if (!mod.prePackCommand) {
+        throw new Error('package command with --build requires em-module.prePackCommand')
+      }
+
       console.log(`Running "${mod.prePackCommand}" ...`)
       const startTime = Date.now()
       const packResult = require('child_process').execSync(mod.prePackCommand)
@@ -474,6 +478,7 @@ function main (process, os) {
     .command('package')
     .description('creates a package file using the pre-defined command')
     // .option('-a, --account <accountName>', 'The name of the configured account')
+    .option('-b, --build', 'Runs configured build command (e.g: npm build)')
     .option('-p, --push', 'Pushes the generaged package')
     .action(createPackage)
 
