@@ -187,7 +187,7 @@ async function createModule (options, command) {
         return pass || 'Please enter a valid build directory name with a valid string between 3 and 12 chars'
       }
     },
-    {
+    /* {
       type: 'input',
       name: 'mainFile',
       message: 'What\'s the main javascript file?',
@@ -197,7 +197,7 @@ async function createModule (options, command) {
 
         return pass || 'Please enter a main javascript file with a valid string between 48 and 64 chars'
       }
-    },
+    }, */
     {
       type: 'input',
       name: 'prePackCommand',
