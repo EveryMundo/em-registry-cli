@@ -26,6 +26,7 @@
   "homepage": "https://github.com/EveryMundo/em-registry-cli#readme",
   "dependencies": {
     "@everymundo/http-client": "^4.2.3",
+    "@everymundo/json-utils": "^1.1.1",
     "commander": "^9.4.1",
     "form-data": "^4.0.0",
     "inquirer": "^8.1.2",
@@ -36,10 +37,10 @@
     "lib": "lib"
   },
   "devDependencies": {
-    "chai": "^4.3.6",
-    "mocha": "^10.1.0",
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "sinon": "^14.0.1",
+    "sinon": "^15.0.3",
     "standard": "^17.0.0"
   }
 }
