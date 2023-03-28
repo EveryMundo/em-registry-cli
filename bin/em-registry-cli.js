@@ -416,6 +416,18 @@ async function addDirectory (dirpath, zipfile) {
   }
 }
 
+function whoami (options, command) {
+  const { account = 'default' } = command.parent.opts()
+  const id = identity.getAccount(account)
+
+  if (id.accountId === '' || id.userId === '') {
+    console.log('Configuration not found. Please run the configure command first.')
+    return
+  }
+
+  console.log(`Partner: ${id.accountId}, User: ${id.userId}`)
+}
+
 const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
   zipfile.end(() => zipfile.outputStream.pipe(FS.createWriteStream(zipFileName))
     .once('close', () => {
@@ -487,6 +499,11 @@ function main (process, os) {
     .description('puts a specific deployment in a queue for QA to promote it to a prod version')
     .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
     .action(requestQa)
+
+  program
+    .command('whoami')
+    .description('prints the current Partner and userId')
+    .action(whoami)
 
   program.parse(process.argv)
 }
