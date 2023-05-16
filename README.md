@@ -80,3 +80,15 @@ The output of the publish command, when successfull, should be a preview URL of 
 ```sh
 Preview URL: https://em-registry-uploads--849481900493--us-east-1.s3.amazonaws.com/prod/ANDREZ/m201/000000340618804092/index.html
 ```
+## Commands
+| Commands                    | Description                                                |
+| --------------------------- | ---------------------------------------------------------- |
+| push \<zipfile>             | Pushes your Everymundo Module                              |
+| init                        | Initializes a module with its id                           |
+| configure                   | Configures credentials                                     |
+| create                      | Creates a module on our servers                            |
+| list-modules [options]      | List available modules for you                             |
+| package [options]           | Creates a package file using the pre-defined command       |
+| promote [options]           | Puts a specific deployment in a queue for QA to promote it |
+| whoami                      | Prints the current Partner and userId                      |
+| help [command]              | Display help for command                                   |
