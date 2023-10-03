@@ -1,6 +1,6 @@
 {
   "name": "@everymundo/em-registry-cli",
-  "version": "0.10.1",
+  "version": "0.11.0",
   "description": "CLI for the EM Registry",
   "bin": {
     "em-registry-cli": "bin/em-registry-cli.js",
