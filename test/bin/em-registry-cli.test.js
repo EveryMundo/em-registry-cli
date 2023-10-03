@@ -21,7 +21,7 @@ describe('bin/em-registry-cli', () => {
   })
 
   describe('#uploadArtifact', () => {
-    context('when plaform is mac', () => {
+    describe('when plaform is mac', () => {
       const os = require('os')
 
       beforeEach(() => {
