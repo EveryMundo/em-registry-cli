@@ -291,7 +291,9 @@ async function requestQa (options, command) {
 
   console.log('Deployment ID: ', answers.deploymentId || options.id)
 
-  const finalAnswer = await inquirer.prompt([{
+  const finalAnswer = (options.yes )
+  ? { correct: 'yes' }
+  : await inquirer.prompt([{
     type: 'input',
     name: 'correct',
     message: 'Are you sure you want to promote this deployment id? (yes|no)',
@@ -498,6 +500,7 @@ function main (process, os) {
     .command('promote')
     .description('puts a specific deployment in a queue for QA to promote it to a prod version')
     .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
+    .option('-y, --yes', 'Automatically answers yes to the promotion of a module')
     .action(requestQa)
 
   program
