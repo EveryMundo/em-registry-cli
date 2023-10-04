@@ -1,3 +1,5 @@
+[![NPM version](https://img.shields.io/badge/npm-v0.11-red)](https://www.npmjs.com/package/@everymundo/em-registry-cli)
+
 # registry
 CLI for the EM Registry
 
