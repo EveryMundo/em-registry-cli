@@ -1,6 +1,6 @@
 {
   "name": "@everymundo/em-registry-cli",
-  "version": "0.11.0",
+  "version": "0.12.0",
   "description": "CLI for the EM Registry",
   "bin": {
     "em-registry-cli": "bin/em-registry-cli.mjs",
@@ -13,7 +13,9 @@
     "fix-lint": "standard --fix  *.js lib/*.js test/*.js test/*/*.js test/*/*/*.js ds-filters/*.js ds-filters/*/*.js ds-filters/*/*/*.js",
     "test": "env LOG_LEVEL=silent mocha --recursive"
   },
-  "engines": { "node": ">=14.0.0" },
+  "engines": {
+    "node": ">=14.0.0"
+  },
   "engineStrict": true,
   "repository": {
     "type": "git",
