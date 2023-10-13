@@ -1,14 +1,21 @@
 #!/usr/bin/env node
-const FS = require('fs')
-const path = require('path')
-const { promises: fs } = require('fs')
-const { Command } = require('commander')
-const FormData = require('form-data')
+import FS from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
+import fs from 'node:fs/promises'
+import childProcess from 'node:child_process'
+import yazl from 'yazl'
 
-// const { requestUploadUrl } = require('../lib/request-upload-url')
-const modLib = require('../lib/get-module-id')
-const identity = require('../lib/identity')
-const registryApis = require('../lib/registry-webapis')
+// const chalkPipe = require('chalk-pipe')
+import { Command } from 'commander'
+import FormData from 'form-data'
+import inquirer from 'inquirer'
+
+import modLib from '../lib/get-module-id.js'
+import identity from '../lib/identity.js'
+import registryApis from '../lib/registry-webapis.js'
+import { checkLatestVersion } from '../lib/check-latest-version.mjs'
+import { packJson } from '../lib/package-json.mjs'
 
 const submit = (form, url) => new Promise((resolve, reject) => {
   form.submit(url, (err, res) => {
@@ -17,11 +24,8 @@ const submit = (form, url) => new Promise((resolve, reject) => {
     }
 
     const buffs = []
-    res.on('data', (chunk) => buffs.push(chunk))
-    res.on('end', () => {
-      console.log({ buffs })
-      resolve(Buffer.concat(buffs))
-    })
+    res.on('data', (chunk) => { buffs.push(chunk) })
+    res.on('end', () => { resolve(Buffer.concat(buffs)) })
 
     res.on('error', reject)
   })
@@ -47,6 +51,9 @@ const uploadArtifact = async (os, form, uploadURL, compressedFileName, compresse
 }
 
 async function push (compressedFileName, options, command) {
+  checkLatestVersion(command.parent.opts())
+    .then(console.log)
+
   const { account = 'default' } = command.parent.opts()
   const moduleId = modLib.getModuleId()
   const data = await fs.readFile(compressedFileName)
@@ -56,7 +63,7 @@ async function push (compressedFileName, options, command) {
     const id = identity.getAccount(account)
     // console.log({ id })
     urlResponse = await registryApis.requestUploadUrl(id, moduleId, data)
-    console.log({ urlResponse })
+    if (debug) console.log({ urlResponse })
   } catch (e) {
     if (e.stats == null) {
       throw e
@@ -65,13 +72,14 @@ async function push (compressedFileName, options, command) {
     return console.error(e.stats.responseText)
   }
 
-  const os = require('os')
   const form = new FormData()
   await uploadArtifact(os, form, urlResponse.uploadURL, compressedFileName, data)
 
   const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
-  console.log(`Preview URL: ${urlResponse.previewUrl}`)
-  console.log(`Playground: ${playgroundUrl}`)
+  console.table([
+    {name: 'Preview', url: urlResponse.previewUrl},
+    {name: 'Playground', url: playgroundUrl}
+  ])
 
   if (Array.isArray(urlResponse.tenantsPreviewUrls)) {
     for (const { tenantId, url } of urlResponse.tenantsPreviewUrls) {
@@ -84,8 +92,6 @@ async function push (compressedFileName, options, command) {
 async function configure (options, command) {
   const { account = 'default' } = command.parent.opts()
   const id = getId(account)
-  const inquirer = require('inquirer')
-  // const chalkPipe = require('chalk-pipe')
 
   const questions = [
     {
@@ -144,7 +150,6 @@ function getId (account = 'default') {
 
 async function createModule (options, command) {
   const { debug = false, account = 'default' } = command.parent.opts()
-  const inquirer = require('inquirer')
   const mod = modLib.getModule()
 
   if (mod.moduleId != null) {
@@ -257,7 +262,6 @@ async function createModule (options, command) {
 // async function requestQa (opts, debug = false, account = 'default') {
 async function requestQa (options, command) {
   const { debug = false, account = 'default' } = command.parent.opts()
-  const inquirer = require('inquirer')
   const mod = modLib.getModule()
 
   if (mod.moduleId == null) {
@@ -334,9 +338,6 @@ async function initialize (options, command) {
   // const { account = 'default' } = command.parent.opts()
   const mod = modLib.getModule()
 
-  const inquirer = require('inquirer')
-  // const chalkPipe = require('chalk-pipe')
-
   const questions = [
     {
       type: 'input',
@@ -376,7 +377,7 @@ async function createPackage (options, command) {
 
       console.log(`Running "${mod.prePackCommand}" ...`)
       const startTime = Date.now()
-      const packResult = require('child_process').execSync(mod.prePackCommand)
+      const packResult = childProcess.execSync(mod.prePackCommand)
       const timeTaken = Date.now() - startTime
       console.log(`====\n${packResult.toString()}====\n${timeTaken / 1000} seconds\n====`)
     }
@@ -386,7 +387,7 @@ async function createPackage (options, command) {
     process.exit(1)
   }
 
-  const yazl = require('yazl')
+  
   const zipfile = new yazl.ZipFile()
 
   const zipFileName = 'em-module.zip'
@@ -441,7 +442,6 @@ const saveZipFile = (zipFileName, zipfile) => new Promise((resolve) => {
 
 function main (process, os) {
   const program = new Command()
-  // const process = require('node:process')
 
   process.on('uncaughtException', (e, origin) => {
     console.error(program.opts().debug ? e : e.message)
@@ -455,7 +455,7 @@ function main (process, os) {
     process.exit(1)
   })
 
-  program.version(require('../package').version)
+  program.version(packJson.version)
   program.option('-a, --account <accountName>', 'The name of the configured account')
   program.option('-d, --debug', 'Prints more information about the current process')
 
@@ -511,11 +511,12 @@ function main (process, os) {
   program.parse(process.argv)
 }
 
-if (require.main === module) {
-  main(process, require('os'))
-}
+// if (require.main === module) {
+  main(process, os)
+  checkLatestVersion().then(r => r && console.log(r))
+// }
 
-module.exports = {
+export default {
   uploadArtifact,
   main
 }
