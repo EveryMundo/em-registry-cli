@@ -1,7 +1,7 @@
 import inquirer from 'inquirer'
 
 import identity from '../../lib/identity.mjs'
-import modLib from '../../lib/get-module-id.js'
+import modLib from '../../lib/module-id.mjs'
 import registryApis from '../../lib/registry-webapis.mjs'
 
 export default createModule

@@ -4,7 +4,7 @@ import path from 'node:path'
 import childProcess from 'node:child_process'
 import yazl from 'yazl'
 
-import modLib from '../../lib/get-module-id.js'
+import modLib from '../../lib/module-id.mjs'
 import { push } from './push.mjs'
 
 // package is a reserved word in nodejs hence the underscore

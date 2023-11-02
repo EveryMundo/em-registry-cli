@@ -3,7 +3,7 @@ import os from 'node:os'
 import FormData from 'form-data'
 
 import identity from '../../lib/identity.mjs'
-import modLib from '../../lib/get-module-id.js'
+import modLib from '../../lib/module-id.mjs'
 import registryApis from '../../lib/registry-webapis.mjs'
 import { checkLatestVersion } from '../../lib/check-latest-version.mjs'
 

@@ -1,6 +1,6 @@
 import inquirer from 'inquirer'
 
-import modLib from '../../lib/get-module-id.js'
+import modLib from '../../lib/module-id.mjs'
 
 export default initialize
 export async function initialize (options, command) {
