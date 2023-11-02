@@ -1,6 +1,6 @@
 import inquirer from 'inquirer'
 
-import identity from '../../lib/identity.js'
+import identity from '../../lib/identity.mjs'
 
 export default configure
 export async function configure (options, command) {

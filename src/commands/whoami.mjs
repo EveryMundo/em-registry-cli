@@ -1,4 +1,4 @@
-import identity from '../../lib/identity.js'
+import identity from '../../lib/identity.mjs'
 
 export default whoami
 export function whoami (options, command) {

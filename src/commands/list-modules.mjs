@@ -1,4 +1,4 @@
-import identity from '../../lib/identity.js'
+import identity from '../../lib/identity.mjs'
 import registryApis from '../../lib/registry-webapis.js'
 
 export default listModules

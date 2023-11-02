@@ -1,6 +1,6 @@
 import inquirer from 'inquirer'
 
-import identity from '../../lib/identity.js'
+import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/get-module-id.js'
 import registryApis from '../../lib/registry-webapis.js'
 
