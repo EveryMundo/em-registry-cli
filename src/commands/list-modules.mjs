@@ -1,5 +1,5 @@
 import identity from '../../lib/identity.mjs'
-import registryApis from '../../lib/registry-webapis.js'
+import registryApis from '../../lib/registry-webapis.mjs'
 
 export default listModules
 export async function listModules (opts, command) {

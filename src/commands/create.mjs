@@ -2,7 +2,7 @@ import inquirer from 'inquirer'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/get-module-id.js'
-import registryApis from '../../lib/registry-webapis.js'
+import registryApis from '../../lib/registry-webapis.mjs'
 
 export default createModule
 export async function createModule (options, command) {

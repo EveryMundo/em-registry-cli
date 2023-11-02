@@ -4,7 +4,7 @@ import FormData from 'form-data'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/get-module-id.js'
-import registryApis from '../../lib/registry-webapis.js'
+import registryApis from '../../lib/registry-webapis.mjs'
 import { checkLatestVersion } from '../../lib/check-latest-version.mjs'
 
 export default push
