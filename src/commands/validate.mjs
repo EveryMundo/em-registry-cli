@@ -5,7 +5,6 @@ import util from 'node:util'
 import Ajv from 'ajv'
 import httpClient from '@everymundo/http-client'
 import { checkBackwardCompatibility } from '@everymundo/registry-setup-json-spec/check-backward-compatibility.mjs'
-import { asyncGunzip } from '@everymundo/aws-sdk-v3-helpers/lib/zipper.mjs'
 import { parseJson } from '@everymundo/json-utils'
 
 import identity from '../../lib/identity.mjs'
@@ -107,7 +106,7 @@ export async function validateBackwardCompatibility (setupJson, command) {
     throw new Error('setupJson.settings.schema is required')
   }
 
-  const { debug = false, account = 'default' } = command.parent.opts()
+  const { /* debug = false,  */account = 'default' } = command.parent.opts()
 
   const remoteSettings = await getRemoteSettings(identity, account).catch(e => e)
 
