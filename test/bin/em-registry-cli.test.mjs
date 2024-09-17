@@ -1,20 +1,16 @@
-'use strict'
-
 /* eslint-env mocha */
 /* eslint-disable no-unused-expressions, import/no-extraneous-dependencies */
 
-require('../test-setup')
+import '../test-setup.js'
+import os from 'node:os'
 
-const { expect } = require('chai')
-const sinon = require('sinon')
+import { expect } from 'chai'
+import sinon from 'sinon'
+import cli from '../../bin/em-registry-cli.mjs'
 
 describe('bin/em-registry-cli', () => {
   const box = sinon.createSandbox()
-  const cli = require('../../bin/em-registry-cli.js')
-
-  beforeEach(() => {
-    // box = sinon.createSandbox()
-  })
+  // beforeEach(() => {  })
 
   afterEach(() => {
     box.restore()
@@ -22,7 +18,7 @@ describe('bin/em-registry-cli', () => {
 
   describe('#uploadArtifact', () => {
     describe('when plaform is mac', () => {
-      const os = require('os')
+
 
       beforeEach(() => {
         box.stub(os, 'platform').callsFake(() => 'darwin')

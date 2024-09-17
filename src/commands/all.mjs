@@ -15,5 +15,5 @@ export const commands = {
 
   push: async (...args) => (await import('./push.mjs')).default(...args),
 
-  validate: async (...args) => (await import('./validate.mjs')).default(...args),
+  validate: async (...args) => (await import('./validate.mjs')).default(...args)
 }
