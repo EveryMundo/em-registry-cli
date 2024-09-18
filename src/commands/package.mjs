@@ -14,7 +14,7 @@ export async function _package (options, command) {
   const mod = modLib.getModule()
 
   if (mod.err != null) {
-    if (mod.err.code === 'MODULE_NOT_FOUND') {
+    if (mod.err.code === 'MODULE_NOT_FOUND' || mod.err.code === 'ENOENT') {
       console.error(`Check your em-module.json ${path.basename(mod.moduleJsonFile)}`)
       throw new Error(`Working directory ${path.dirname(mod.moduleJsonFile)} does not contain a valid ${path.basename(mod.moduleJsonFile)}`)
     }
