@@ -2,7 +2,7 @@ import inquirer from 'inquirer'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/module-id.mjs'
-import registryApis from '../../lib/registry-webapis.mjs'
+import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 
 export default promote
 export async function promote (options, command) {
@@ -67,5 +67,11 @@ export async function promote (options, command) {
 
   const response = await registryApis.post(identity.getAccount(account), 'qa-request', postData)
 
-  console.log({ response })
+  if (response instanceof ErrorResponse) {
+    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+
+    process.exit(1)
+  }
+
+  console.log({ status: response.statusCode, inQueue: response.data })
 }
