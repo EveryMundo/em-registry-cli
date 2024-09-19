@@ -4,7 +4,7 @@ import FormData from 'form-data'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/module-id.mjs'
-import registryApis from '../../lib/registry-webapis.mjs'
+import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 import { checkLatestVersion } from '../../lib/check-latest-version.mjs'
 
 export default push
@@ -20,7 +20,15 @@ export async function push (compressedFileName, options, command) {
   try {
     const id = identity.getAccount(account)
     // console.log({ id })
-    urlResponse = await registryApis.requestUploadUrl(id, moduleId, data)
+    const response = await registryApis.requestUploadUrl(id, moduleId, data)
+
+    if (response instanceof ErrorResponse) {
+      console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+
+      process.exit(1)
+    }
+
+    urlResponse = response.data
     if (debug) console.log({ urlResponse })
   } catch (e) {
     if (e.stats == null) {
@@ -35,6 +43,7 @@ export async function push (compressedFileName, options, command) {
 
   const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
   console.table([
+    { name: 'deploymentId', value: urlResponse.deploymentId },
     { name: 'Preview', url: urlResponse.previewUrl },
     { name: 'Playground', url: playgroundUrl }
   ])
