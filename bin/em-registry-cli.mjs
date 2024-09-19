@@ -79,12 +79,11 @@ function main (process) {
   program.parse(process.argv)
 }
 
-if (await isThisModuleMain()) {
+if (await isThisModuleMain(process, fs)) {
   main(process)
-  // (await import('../lib/check-latest-version.mjs')).checkLatestVersion().then(r => r && console.log(r))
 }
 
-async function isThisModuleMain () {
+async function isThisModuleMain (process, fs) {
   const argv1 = process.argv[1]
   const stat = await fs.lstat(argv1).catch(e => e)
 
