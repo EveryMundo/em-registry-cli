@@ -2,7 +2,7 @@ import inquirer from 'inquirer'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/module-id.mjs'
-import registryApis from '../../lib/registry-webapis.mjs'
+import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 
 export default createModule
 export async function createModule (options, command) {
@@ -28,6 +28,23 @@ export async function createModule (options, command) {
       }
     },
     {
+      type: 'checkbox',
+      name: 'industries',
+      message: 'What industries are you building this module for?',
+      choices: [
+        { name: 'Airlines', value: 'A' },
+        { name: 'Hotels', value: 'H' },
+        { name: 'Packages', value: 'P' }
+      ],
+      validate (answer) {
+        if (answer.length === 0) {
+          return 'You must choose at least one industry.'
+        }
+
+        return true
+      }
+    },
+    {
       type: 'input',
       name: 'tenantIds',
       message: 'What companies are you building this module for?',
@@ -49,17 +66,6 @@ export async function createModule (options, command) {
         return pass || 'Please enter a valid build directory name with a valid string between 3 and 12 chars'
       }
     },
-    /* {
-      type: 'input',
-      name: 'mainFile',
-      message: 'What\'s the main javascript file?',
-      default () { return 'index.js' },
-      validate (value) {
-        const pass = /^\w{3,18}\.js$/.test(value)
-
-        return pass || 'Please enter a main javascript file with a valid string between 48 and 64 chars'
-      }
-    }, */
     {
       type: 'input',
       name: 'prePackCommand',
@@ -106,12 +112,18 @@ export async function createModule (options, command) {
 
   const response = await registryApis.post(identity.getAccount(account), 'create-module', answers)
 
+  if (response instanceof ErrorResponse) {
+    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse })
+
+    process.exit(1)
+  }
+
   const modObject = {
-    moduleId: response.module._id,
+    moduleId: response.data.module._id,
     ...answers
   }
 
   modLib.saveModuleId(modObject)
 
-  console.log({ response })
+  console.log(response.data)
 }

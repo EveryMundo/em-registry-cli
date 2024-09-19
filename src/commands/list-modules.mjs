@@ -1,11 +1,19 @@
 import identity from '../../lib/identity.mjs'
-import registryApis from '../../lib/registry-webapis.mjs'
+import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 
 export default listModules
 export async function listModules (opts, command) {
   const { debug = false, account = 'default' } = command.parent.opts()
-  console.log({ opts })
+
   const response = await registryApis.get(identity.getAccount(account), 'list-modules', debug)
 
-  console.table(response.map(({ _id, name, forTenants, createdBy }) => ({ _id, name, forTenants, createdBy })))
+  if (response instanceof ErrorResponse) {
+    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+
+    process.exit(1)
+  }
+
+  console.table(response.data
+    .sort((a, b) => a._id.localeCompare(b._id))
+    .map(({ _id, name, forTenants, industries, createdBy }) => ({ _id, name, forTenants, industries: industries.join(), createdBy })))
 }

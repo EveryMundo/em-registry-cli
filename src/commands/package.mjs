@@ -42,6 +42,17 @@ export async function _package (options, command) {
 
   const zipFileName = 'em-module.zip'
   console.log(`creating file ${zipFileName}...`)
+  const st = await fs.statfs(mod.buildDirectory).catch(e => e)
+  if (st instanceof Error) {
+    if (st.code === 'ENOENT') {
+      console.error(`Error: build directory [${mod.buildDirectory}] does not exist! Check your em-module.json`)
+    } else {
+      console.error(`Error: ${st.message}`)
+    }
+
+    process.exit(1)
+  }
+
   await addDirectory(mod.buildDirectory, zipfile)
 
   await saveZipFile(zipFileName, zipfile)
@@ -60,7 +71,7 @@ async function addDirectory (dirpath, zipfile) {
     const stats = await fs.lstat(filePath)
 
     if (stats.isFile()) {
-      const entryName = filePath.substr(filePath.indexOf('/') + 1)
+      const entryName = filePath.slice(filePath.indexOf('/') + 1)
       console.log(`adding ${filePath} as ${entryName}`)
       zipfile.addFile(`${filePath}`, entryName)
     } else if (stats.isDirectory()) {
