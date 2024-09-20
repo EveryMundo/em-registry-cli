@@ -8,7 +8,7 @@ export async function listModules (opts, command) {
   const response = await registryApis.get(identity.getAccount(account), 'list-modules', debug)
 
   if (response instanceof ErrorResponse) {
-    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+    console.error(response.toJSON())
 
     process.exit(1)
   }

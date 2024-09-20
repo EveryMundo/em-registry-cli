@@ -23,7 +23,7 @@ export async function push (compressedFileName, options, command) {
     const response = await registryApis.requestUploadUrl(id, moduleId, data)
 
     if (response instanceof ErrorResponse) {
-      console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+      console.error(response.toJSON())
 
       process.exit(1)
     }

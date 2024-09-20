@@ -16,6 +16,7 @@ function uncaught (program, err, origin) {
 }
 
 function main (process) {
+  process.env.EMHC_LOG_LEVEL = 'silent'
   const program = new Command()
 
   process

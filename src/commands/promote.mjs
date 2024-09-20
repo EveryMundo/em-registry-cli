@@ -68,7 +68,7 @@ export async function promote (options, command) {
   const response = await registryApis.post(identity.getAccount(account), 'qa-request', postData)
 
   if (response instanceof ErrorResponse) {
-    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse.toString() })
+    console.error(response.toJSON())
 
     process.exit(1)
   }

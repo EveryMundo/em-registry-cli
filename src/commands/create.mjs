@@ -113,7 +113,7 @@ export async function createModule (options, command) {
   const response = await registryApis.post(identity.getAccount(account), 'create-module', answers)
 
   if (response instanceof ErrorResponse) {
-    console.error({ status: response.statusCode, data: response.data ?? response.rawResponse })
+    console.error(response.toJSON())
 
     process.exit(1)
   }
