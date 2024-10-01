@@ -9,11 +9,12 @@ import { parseJson } from '@everymundo/json-utils'
 
 import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/module-id.mjs'
-import registryApis from '../../lib/registry-webapis.mjs'
+import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 
 export default validate
 export async function validate (options, command) {
-  const setupJson = parseJson(await fs.readFile('setup.json'))
+  const mod = modLib.getModule()
+  const setupJson = parseJson(await fs.readFile(`${mod.buildDirectory}/setup.json`))
 
   await validateSetupJson(setupJson)
   await validateBackwardCompatibility(setupJson, command)
@@ -61,17 +62,17 @@ export async function validateSetupJson (setupJson) {
       ), '\n'
     )
 
-    throw new Error('Schema validation: ERROR')
+    console.error('Schema validation: \u274C ERROR')
   }
 
-  console.log('Schema validation: PASS')
+  console.log('Schema validation: \u2705 PASS')
 }
 
 const cacheIsTooOld = (stat, maxAge = 864000) => stat == null || Date.now() - stat.ctime.getTime() > maxAge
 
 async function getRemoteSettings (identity, account) {
   const moduleId = modLib.getModuleId()
-  const tempFilePath = path.join(os.tmpdir(), `registry-remote-settings-for${moduleId}-cached.json`)
+  const tempFilePath = path.join(os.tmpdir(), `registry-remote-settings-for-${moduleId}-cached.json`)
   const [{ value: stat }, { value: buffer }] = await Promise.allSettled([
     fs.stat(tempFilePath),
     fs.readFile(tempFilePath)
@@ -85,6 +86,17 @@ async function getRemoteSettings (identity, account) {
 
     if (remoteSettings instanceof Error) {
       throw new Error(`Error fetching latest schema: ${remoteSettings.message}`)
+    }
+
+    if (remoteSettings instanceof ErrorResponse) {
+      if (remoteSettings.statusCode === 404) {
+        return remoteSettings
+      }
+
+      console.error('Error fetching latest schema')
+      console.error(remoteSettings.toJSON())
+
+      process.exit(1)
     }
 
     fs.writeFile(tempFilePath, JSON.stringify(remoteSettings))
@@ -116,10 +128,10 @@ export async function validateBackwardCompatibility (setupJson, command) {
     throw new Error('Error fetching latest schema')
   }
 
-  if (remoteSettings.code === 404) {
+  if (remoteSettings.statusCode === 404) {
     console.error('No remote settings found')
 
-    return console.log('Schema compatible: IGNORED')
+    return console.log('Schema compatible: \uD83D\uDEAB IGNORED')
   }
 
   const check = checkBackwardCompatibility(remoteSettings.schema.properties, setupJson.settings.schema.properties)
