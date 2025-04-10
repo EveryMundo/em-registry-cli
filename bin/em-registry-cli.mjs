@@ -1,11 +1,10 @@
 #!/usr/bin/env node
 import fs from 'node:fs/promises'
+import url from 'node:url'
 import { Command } from 'commander'
 
 import packJson from '../lib/package-json.mjs'
 import { commands } from '../src/commands/all.mjs'
-
-import url from 'url';
 
 function uncaught (program, err, origin) {
   if (program.opts().debug) {
@@ -94,11 +93,12 @@ async function isThisModuleMain (process, fs) {
     return false
   }
 
+  const fileUrl = url.pathToFileURL(argv1).href
   if (stat.isSymbolicLink()) {
     return import.meta.url === `file://${await fs.realpath(argv1)}`
   }
 
-  return import.meta.url === url.pathToFileURL(argv1).href
+  return import.meta.url === fileUrl
 }
 
 export default {

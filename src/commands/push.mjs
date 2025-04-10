@@ -44,8 +44,8 @@ export async function push (compressedFileName, options, command) {
   const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
   console.table([
     { name: 'deploymentId', value: urlResponse.deploymentId },
-    { name: 'Preview', url: urlResponse.previewUrl },
-    { name: 'Playground', url: playgroundUrl }
+    { name: 'Preview', value: urlResponse.previewUrl },
+    { name: 'Playground', value: playgroundUrl }
   ])
 
   if (Array.isArray(urlResponse.tenantsPreviewUrls)) {

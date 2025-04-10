@@ -99,7 +99,8 @@ async function getRemoteSettings (identity, account) {
       process.exit(1)
     }
 
-    fs.writeFile(tempFilePath, JSON.stringify(remoteSettings))
+    // fs.writeFile(tempFilePath, JSON.stringify(remoteSettings))
+    fs.writeFile(tempFilePath, remoteSettings.rawResponse)
   }
 
   return remoteSettings
@@ -120,21 +121,24 @@ export async function validateBackwardCompatibility (setupJson, command) {
 
   const { /* debug = false,  */account = 'default' } = command.parent.opts()
 
-  const remoteSettings = await getRemoteSettings(identity, account).catch(e => e)
+  const remoteSettingsResponse = await getRemoteSettings(identity, account).catch(e => e)
 
-  if (remoteSettings instanceof Error) {
-    console.error(remoteSettings)
+  if (remoteSettingsResponse instanceof Error) {
+    console.error(remoteSettingsResponse)
 
     throw new Error('Error fetching latest schema')
   }
 
-  if (remoteSettings.statusCode === 404) {
+  if (remoteSettingsResponse.statusCode === 404) {
     console.error('No remote settings found')
 
     return console.log('Schema compatible: \uD83D\uDEAB IGNORED')
   }
+  // console.log(JSON.stringify({ remoteSettingsResponse }))
+  const remoteSettings = remoteSettingsResponse.data
 
-  const check = checkBackwardCompatibility(remoteSettings.schema.properties, setupJson.settings.schema.properties)
+  console.log(JSON.stringify({ remoteSettings }))
+  const check = checkBackwardCompatibility(remoteSettingsResponse.data.schema, setupJson.settings.schema.properties)
 
   if (check.errors.length > 0) {
     console.error(
