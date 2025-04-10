@@ -29,13 +29,13 @@
   },
   "homepage": "https://github.com/EveryMundo/em-registry-cli#readme",
   "dependencies": {
-    "@everymundo/aws-sdk-v3-helpers": "^1.11.0",
-    "@everymundo/http-client": "^4.4.0",
+    "@everymundo/aws-sdk-v3-helpers": "^1.15.0",
+    "@everymundo/http-client": "^4.6.0",
     "@everymundo/json-utils": "^1.1.1",
-    "@everymundo/registry-setup-json-spec": "^0.4.0",
+    "@everymundo/registry-setup-json-spec": "^0.4.1",
     "ajv": "^8.12.0",
     "commander": "^12.1.0",
-    "form-data": "^4.0.0",
+    "form-data": "^4.0.2",
     "inquirer": "^11.0.2",
     "yazl": "^2.5.1"
   },
@@ -44,11 +44,11 @@
     "lib": "lib"
   },
   "devDependencies": {
-    "chai": "^5.1.1",
-    "dotenv": "^16.4.5",
-    "mocha": "^10.7.3",
-    "nyc": "^17.0.0",
-    "sinon": "^19.0.2",
+    "chai": "^5.2.0",
+    "dotenv": "^16.4.7",
+    "mocha": "^11.1.0",
+    "nyc": "^17.1.0",
+    "sinon": "^20.0.0",
     "standard": "^17.1.2"
   }
 }
