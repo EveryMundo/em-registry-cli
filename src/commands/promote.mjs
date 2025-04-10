@@ -4,14 +4,20 @@ import identity from '../../lib/identity.mjs'
 import modLib from '../../lib/module-id.mjs'
 import registryApis, { ErrorResponse } from '../../lib/registry-webapis.mjs'
 
+function getModuleId (options) {
+  if (options.module != null) return options.module
+
+  return modLib.getModule().moduleId
+}
+
 export default promote
 export async function promote (options, command) {
   const { debug = false, account = 'default' } = command.parent.opts()
-  const mod = modLib.getModule()
 
-  if (mod.moduleId == null) {
-    console.error('Missing Module!')
-    if (debug) console.error(mod)
+  const moduleId = getModuleId(options)
+  if (moduleId == null) {
+    const err = new Error('Missing Module ID')
+    if (debug) console.error(err); else console.error(err.message)
 
     process.exit(1)
   }
@@ -61,7 +67,7 @@ export async function promote (options, command) {
   }
 
   const postData = {
-    moduleId: mod.moduleId,
+    moduleId,
     deploymentId: answers.deploymentId
   }
 

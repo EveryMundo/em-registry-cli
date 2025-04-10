@@ -65,6 +65,7 @@ function main (process) {
     .command('promote')
     .description('puts a specific deployment in a queue for QA to promote it to a prod version')
     .option('-i, --id <deploymentId>', 'The deployment id to be analyzed')
+    .option('-m, --module <moduleId>', 'The optional module id for promotion outside module directory')
     .option('-y, --yes', 'Automatically answers yes to the promotion of a module')
     .action(commands.promote)
 
