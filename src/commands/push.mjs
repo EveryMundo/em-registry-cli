@@ -40,11 +40,12 @@ export async function push (compressedFileName, options, command) {
 
   const form = new FormData()
   await uploadArtifact(os, form, urlResponse.uploadURL, compressedFileName, data)
-
-  const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(urlResponse.previewUrl)}`
+  const { deploymentId, previewUrl } = urlResponse
+  const playgroundUrl = `https://everymundo.github.io/registry/playground/?url=${(previewUrl)}`
   console.table([
-    { name: 'deploymentId', value: urlResponse.deploymentId },
-    { name: 'Preview', value: urlResponse.previewUrl },
+    { name: 'deploymentId', value: deploymentId },
+    { name: 'Preview', value: previewUrl },
+    { name: 'LATEST', value: `${previewUrl.replace(deploymentId, 'LATEST')}?from=${deploymentId}` },
     { name: 'Playground', value: playgroundUrl }
   ])
 
