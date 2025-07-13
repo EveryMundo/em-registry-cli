@@ -26,6 +26,7 @@ export async function promote (options, command) {
   const optidTestPassed = deploymentIdRegExp.test(options.id)
   if (options.id == null || !optidTestPassed) {
     console.log(`Invalid deployment id [ ${options.id} ]`)
+    process.exit(1)
   }
 
   const questions = (options.id !== null && optidTestPassed)
