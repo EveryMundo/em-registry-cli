@@ -1,5 +1,6 @@
 import FS from 'node:fs'
 import fs from 'node:fs/promises'
+import os from 'node:os'
 import path from 'node:path'
 import childProcess from 'node:child_process'
 import yazl from 'yazl'
@@ -62,16 +63,16 @@ export async function _package (options, command) {
   }
 }
 
-async function addDirectory (dirpath, zipfile) {
+export async function addDirectory (dirpath, zipfile) {
   const dir = await fs.opendir(dirpath)
   const entries = dir.entries()
 
   for await (const entry of entries) {
-    const filePath = `${dirpath}/${entry.name}`
+    const filePath = path.join(dirpath, entry.name)
     const stats = await fs.lstat(filePath)
 
     if (stats.isFile()) {
-      const entryName = filePath.slice(filePath.indexOf('/') + 1)
+      const entryName = filePath.slice(filePath.indexOf(path.sep) + 1)
       console.log(`adding ${filePath} as ${entryName}`)
       zipfile.addFile(`${filePath}`, entryName)
     } else if (stats.isDirectory()) {
