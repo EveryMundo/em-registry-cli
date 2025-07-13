@@ -54,7 +54,9 @@ export async function validateSetupJson (setupJson) {
 
   const validate = ajv.compile(schema)
 
-  if (!validate(setupJson)) {
+  if (validate(setupJson)) {
+    console.log('Schema validation: \u2705 PASS')
+  } else {
     console.error(
       util.inspect(
         Object.fromEntries(validate.errors.map((v, i) => [`Error #${i + 1}`, v])),
@@ -64,8 +66,6 @@ export async function validateSetupJson (setupJson) {
 
     console.error('Schema validation: \u274C ERROR')
   }
-
-  console.log('Schema validation: \u2705 PASS')
 }
 
 const cacheIsTooOld = (stat, maxAge = 864000) => stat == null || Date.now() - stat.ctime.getTime() > maxAge
